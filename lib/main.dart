@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tabbar/tabbar.dart';
 
 String capitalize(word) {
   return "${word[0].toUpperCase()}${word.substring(1)}";
@@ -185,7 +187,6 @@ const multiplier={
   'k': 3.8
 };
 
-
 void main() {
   runApp(MyApp());
 }
@@ -354,7 +355,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         iconSize: 24,
                         elevation: 16,
                         style: TextStyle(color: Colors.black, fontSize:15),
-                        hint: Text('Crop Planted'),
+                        hint: Text('Site'),
                         onChanged: (String newValue) {
                           setState(() {
                             site = newValue;
@@ -529,8 +530,81 @@ class SecondPage extends StatefulWidget {
 class _SecondPageState extends State<SecondPage> {
   final _formKey = GlobalKey<FormState>();
   String chosenN, chosenP, chosenK;
+  Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  Future<double> cost1;
+  Future<double> cost2;
+  Future<double> cost3;
+  Future<double> cost4;
+  Future<double> cost5;
+  Future<double> cost6;
+  TextEditingController _cost1Controller = new TextEditingController();
+  TextEditingController _cost2Controller = new TextEditingController();
+  TextEditingController _cost3Controller = new TextEditingController();
+  TextEditingController _cost4Controller = new TextEditingController();
+  TextEditingController _cost5Controller = new TextEditingController();
+  TextEditingController _cost6Controller = new TextEditingController();
 
-  List<double> computeElement(chosen,element,index){
+  Future<void> _changeCost(cost) async {
+    final SharedPreferences prefs = await _prefs;
+
+    setState(() {
+      cost1 = prefs.setDouble("complete", cost[0]).then((bool success) {
+        return cost[0];
+      });
+
+      cost2 = prefs.setDouble("urea", cost[1]).then((bool success) {
+        return cost[1];
+      });
+
+      cost3 = prefs.setDouble("ammosulphate", cost[2]).then((bool success) {
+        return cost[2];
+      });
+
+      cost4 = prefs.setDouble("ammophosphate", cost[3]).then((bool success) {
+        return cost[3];
+      });
+
+      cost5 = prefs.setDouble("muriateOfPotash", cost[4]).then((bool success) {
+        return cost[4];
+      });
+
+      cost6 = prefs.setDouble("solophos", cost[5]).then((bool success) {
+        return cost[5];
+      });
+    });
+  }
+
+  Future<void> _changeDefault() async {
+    final SharedPreferences prefs = await _prefs;
+
+    setState(() {
+      cost1 = prefs.setDouble("complete", prices['complete']).then((bool success) {
+        return prices['complete'];
+      });
+
+      cost2 = prefs.setDouble("urea", prices['urea']).then((bool success) {
+        return prices['urea'];
+      });
+
+      cost3 = prefs.setDouble("ammosulphate", prices['ammosulphate']).then((bool success) {
+        return prices['ammosulphate'];
+      });
+
+      cost4 = prefs.setDouble("ammophosphate", prices['ammophosphate']).then((bool success) {
+        return prices['ammophosphate'];
+      });
+
+      cost5 = prefs.setDouble("muriateOfPotash", prices['muriateOfPotash']).then((bool success) {
+        return prices['muriateOfPotash'];
+      });
+
+      cost6 = prefs.setDouble("solophos", prices['solophos']).then((bool success) {
+        return prices['solophos'];
+      });
+    });
+  }
+
+  Future<List<double>> computeElement(chosen,element,index) async {
     //a
     var rate = ((yTarget[widget.ch]-ySupply[widget.ch])*multiplier[element]/fRecovery[widget.ch][element]) * widget.area;
     //print(rate.ceil());
@@ -544,7 +618,20 @@ class _SecondPageState extends State<SecondPage> {
     var c = ySupply[widget.ch];
     //print(c);
 
-    var price = prices[chosen]; //depends on the chosen variable
+    var price; //depends on the chosen variable
+    if(chosen == "complete"){
+      price = await cost1;
+    }else if(chosen == "urea"){
+      price = await cost2;
+    }else if(chosen == "ammosulphate"){
+      price = await cost3;
+    }else if(chosen == "ammophosphate"){
+      price = await cost4;
+    }else if(chosen == "muriateOfPotash"){
+      price = await cost5;
+    }else if(chosen == "solophos"){
+      price = await cost6;
+    }
 
     var y,z,econ, max, economic, target;
     for(var i = 1 ; i <= 397; i++){
@@ -560,14 +647,41 @@ class _SecondPageState extends State<SecondPage> {
         max = y-econ;
         economic = z;
       }
-      if(rate.ceil() == i){
-        target = z;
-      }
     }
+
+    target = rate.ceil()*(price/(fType[chosen][index]*50));
 
     return [economic,target];
 
     //print("Max: $max Economic N: $economic Target N: $target");
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    cost1 = _prefs.then((SharedPreferences prefs) {
+      return (prefs.getDouble('complete') ?? prices['complete']);
+    });
+
+    cost2 = _prefs.then((SharedPreferences prefs) {
+      return (prefs.getDouble('urea') ?? prices['urea']);
+    });
+
+    cost3 = _prefs.then((SharedPreferences prefs) {
+      return (prefs.getDouble('ammosulphate') ?? prices['ammosulphate']);
+    });
+
+    cost4 = _prefs.then((SharedPreferences prefs) {
+      return (prefs.getDouble('ammophosphate') ?? prices['ammophosphate']);
+    });
+
+    cost5 = _prefs.then((SharedPreferences prefs) {
+      return (prefs.getDouble('muriateOfPotash') ?? prices['muriateOfPotash']);
+    });
+
+    cost6 = _prefs.then((SharedPreferences prefs) {
+      return (prefs.getDouble('solophos') ?? prices['solophos']);
+    });
   }
 
   @override
@@ -583,41 +697,129 @@ class _SecondPageState extends State<SecondPage> {
           padding: EdgeInsets.all(20),
           child: Column(
             children: [
-              Center(
-                  child: Text(
-                    'Amount of fertilizer',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  )),
-              DataTable(
-                columns: [
-                  DataColumn(label: Text('')),
-                  DataColumn(label: Text('kg')),
-                  DataColumn(label: Text('Bag')),
-                ],
-                rows: [
-                  DataRow(cells: [
-                    DataCell(Text(capitalize(widget.caseCH[0]))),
-                    DataCell(Text(widget.AMF[0].toStringAsFixed(2))),
-                    DataCell(Text( (widget.AMF[0]/50).toStringAsFixed(2)  )),
-                  ]),
-                  DataRow(cells: [
-                    DataCell(Text(capitalize(widget.caseCH[1]))),
-                    DataCell(Text(widget.AMF[1].toStringAsFixed(2))),
-                    DataCell(Text((widget.AMF[1]/50).toStringAsFixed(2))),
-                  ]),
-                  DataRow(cells: [
-                    DataCell(Text(capitalize(widget.caseCH[2]))),
-                    DataCell(Text(widget.AMF[2].toStringAsFixed(2))),
-                    DataCell(Text((widget.AMF[2]/50).toStringAsFixed(2))),
-                  ]),
-                ],
-              ),
+//              Center(
+//                  child: Text(
+//                    'Amount of fertilizer',
+//                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+//                  )),
+//              DataTable(
+//                columns: [
+//                  DataColumn(label: Text('')),
+//                  DataColumn(label: Text('kg')),
+//                  DataColumn(label: Text('Bag')),
+//                ],
+//                rows: [
+//                  DataRow(cells: [
+//                    DataCell(Text(capitalize(widget.caseCH[0]))),
+//                    DataCell(Text(widget.AMF[0].toStringAsFixed(2))),
+//                    DataCell(Text( (widget.AMF[0]/50).toStringAsFixed(2)  )),
+//                  ]),
+//                  DataRow(cells: [
+//                    DataCell(Text(capitalize(widget.caseCH[1]))),
+//                    DataCell(Text(widget.AMF[1].toStringAsFixed(2))),
+//                    DataCell(Text((widget.AMF[1]/50).toStringAsFixed(2))),
+//                  ]),
+//                  DataRow(cells: [
+//                    DataCell(Text(capitalize(widget.caseCH[2]))),
+//                    DataCell(Text(widget.AMF[2].toStringAsFixed(2))),
+//                    DataCell(Text((widget.AMF[2]/50).toStringAsFixed(2))),
+//                  ]),
+//                ],
+//              ),
               Expanded(
                 child: SingleChildScrollView(
                   child: Form(
                     key: _formKey,
                     child: Column(
                       children: [
+                        Center(
+                            child: Text(
+                              'Fertilizer Cost',
+                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            )),
+                        RaisedButton(
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.0),
+                              side: BorderSide(color: Colors.lightGreen[700])
+                          ),
+                          onPressed: () {
+                            buildEditCostsDialog(context);
+                          },
+                          textColor: Colors.green,
+                          //padding: const EdgeInsets.symmetric(vertical:15.0),
+                          child: Text('Edit',style:TextStyle(fontSize:15)),
+                        ),
+                        DataTable(
+                          columns: [
+                            DataColumn(label: Text('Fertilizer Material')),
+                            DataColumn(label: Text('Cost (PHP)')),
+                          ],
+                          rows: [
+                            DataRow(cells: [
+                              DataCell(Text('Complete')),
+                              DataCell(
+                                  FutureBuilder(
+                                    future: cost1,
+                                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                      _cost1Controller.text = snapshot.data.toString();
+                                      return Text(snapshot.data.toString());
+                                    }
+                                  )
+                              ),
+                            ]),
+                            DataRow(cells: [
+                              DataCell(Text('Urea')),
+                              DataCell(FutureBuilder(
+                                  future: cost2,
+                                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                    _cost2Controller.text = snapshot.data.toString();
+                                    return Text(snapshot.data.toString());
+                                  }
+                              )),
+                            ]),
+                            DataRow(cells: [
+                              DataCell(Text('Ammosulphate')),
+                              DataCell(FutureBuilder(
+                                  future: cost3,
+                                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                    _cost3Controller.text = snapshot.data.toString();
+                                    return Text(snapshot.data.toString());
+                                  }
+                              )),
+                            ]),
+                            DataRow(cells: [
+                              DataCell(Text('Ammophosphate')),
+                              DataCell(FutureBuilder(
+                                  future: cost4,
+                                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                    _cost4Controller.text = snapshot.data.toString();
+                                    return Text(snapshot.data.toString());
+                                  }
+                              )),
+                            ]),
+                            DataRow(cells: [
+                              DataCell(Text('Muriate of potash')),
+                              DataCell(FutureBuilder(
+                                  future: cost5,
+                                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                    _cost5Controller.text = snapshot.data.toString();
+                                    return Text(snapshot.data.toString());
+                                  }
+                              )),
+                            ]),
+                            DataRow(cells: [
+                              DataCell(Text('Solophos')),
+                              DataCell(FutureBuilder(
+                                  future: cost6,
+                                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                    _cost6Controller.text = snapshot.data.toString();
+                                    return Text(snapshot.data.toString());
+                                  }
+                              )),
+                            ]),
+                          ],
+                        ),
                         DropdownButtonFormField<String>(
                           validator: (value) => value == null ? 'field required' : null,
                           isExpanded: true,
@@ -697,15 +899,15 @@ class _SecondPageState extends State<SecondPage> {
                     borderRadius: BorderRadius.circular(30.0),
                     //side: BorderSide(color: Colors.lightGreen[700])
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     if(_formKey.currentState.validate()){
-                      var nCost = computeElement(chosenN,'n',0);
-                      var pCost = computeElement(chosenP,'p',1);
-                      var kCost = computeElement(chosenK,'k',2);
+                      var nCost = await computeElement(chosenN,'n',0);
+                      var pCost = await computeElement(chosenP,'p',1);
+                      var kCost = await computeElement(chosenK,'k',2);
 
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => resultsPage(nCost:nCost, pCost:pCost, kCost:kCost)),
+                        MaterialPageRoute(builder: (context) => resultsPage(nCost:nCost, pCost:pCost, kCost:kCost, AMF: widget.AMF, caseCH: widget.caseCH)),
                       );
 //                    FocusScopeNode currentFocus = FocusScope.of(context);
 //                    if (!currentFocus.hasPrimaryFocus) {
@@ -723,29 +925,160 @@ class _SecondPageState extends State<SecondPage> {
         ) // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+
+  buildEditCostsDialog(BuildContext context){
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: true, // dialog is dismissible with a tap on the barrier
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState){
+              return AlertDialog(
+                title: Text('Fertilizer Cost'),
+                shape: RoundedRectangleBorder(
+                    borderRadius:
+                    BorderRadius.circular(8.0)),
+                content: Container(
+                    child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            TextFormField(
+                              validator: (val) => val.isEmpty ? 'field required' : null,
+                              keyboardType: TextInputType.number,
+                              //autofocus: true,
+                              decoration: new InputDecoration(
+                                  labelText: 'Complete'),
+                              controller: _cost1Controller,
+                            ),
+                            TextFormField(
+                              validator: (val) => val.isEmpty ? 'field required' : null,
+                              keyboardType: TextInputType.number,
+                              //autofocus: true,
+                              decoration: new InputDecoration(
+                                  labelText: 'Urea'),
+                              controller: _cost2Controller,
+                            ),
+                            TextFormField(
+                              validator: (val) => val.isEmpty ? 'field required' : null,
+                              keyboardType: TextInputType.number,
+                              //autofocus: true,
+                              decoration: new InputDecoration(
+                                  labelText: 'Ammosulphate'),
+                              controller: _cost3Controller,
+                            ),
+                            TextFormField(
+                              validator: (val) => val.isEmpty ? 'field required' : null,
+                              keyboardType: TextInputType.number,
+                              //autofocus: true,
+                              decoration: new InputDecoration(
+                                  labelText: 'Ammophosphate'),
+                              controller: _cost4Controller,
+                            ),
+                            TextFormField(
+                              validator: (val) => val.isEmpty ? 'field required' : null,
+                              keyboardType: TextInputType.number,
+                              //autofocus: true,
+                              decoration: new InputDecoration(
+                                  labelText: 'Muriate of potash'),
+                              controller: _cost5Controller,
+                            ),
+                            TextFormField(
+                              validator: (val) => val.isEmpty ? 'field required' : null,
+                              keyboardType: TextInputType.number,
+                              //autofocus: true,
+                              decoration: new InputDecoration(
+                                  labelText: 'Solophos'),
+                              controller: _cost6Controller,
+                            ),
+                          ],
+                        )
+                    )
+                ),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text('Reset Default',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    onPressed: () {
+                      _changeDefault();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  RaisedButton(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        side: BorderSide(color: Colors.lightGreen[700]),
+                        borderRadius: BorderRadius.circular(30.0),
+                    ),
+                    child: Text('Cancel',
+                      style: TextStyle(color:Colors.green)
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  RaisedButton(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                    child: Text('Save',
+                    ),
+                    onPressed: () {
+                      _changeCost([double.parse(_cost1Controller.text),
+                        double.parse(_cost2Controller.text),
+                        double.parse(_cost3Controller.text),
+                        double.parse(_cost4Controller.text),
+                        double.parse(_cost5Controller.text),
+                        double.parse(_cost6Controller.text)]
+                      );
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            }
+        );
+      },
+    );
+  }
 }
 
 
 class resultsPage extends StatefulWidget {
   final List<double> nCost,pCost,kCost;
-  resultsPage({Key key, @required this.nCost, @required this.pCost, @required this.kCost}) : super(key: key);
+  final List<dynamic> AMF;
+  final List<String> caseCH;
+  resultsPage({Key key, @required this.nCost, @required this.pCost, @required this.kCost, @required this.AMF, @required this.caseCH}) : super(key: key);
 
   @override
   _resultsPageState createState() => _resultsPageState();
 }
 
 class _resultsPageState extends State<resultsPage> {
-
+  final controller = PageController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          // Here we take the value from the MyHomePage object that was created by
-          // the App.build method, and use it to set our appbar title.
-          title: Text('Results'),
-          centerTitle: true,
+      appBar: AppBar(
+        title: Text("Results"),
+        centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(kToolbarHeight),
+          child: TabbarHeader(
+            controller: controller,
+            tabs: [
+              Tab(text: "Economic"),
+              Tab(text: "Target"),
+            ],
+          ),
         ),
-        body: ListView(children: <Widget>[
+      ),
+      body: TabbarContent(
+        controller: controller,
+        children: <Widget>[
+      ListView(children: <Widget>[
           SizedBox(height:10),
           Center(
               child: Text(
@@ -754,29 +1087,85 @@ class _resultsPageState extends State<resultsPage> {
               )),
           DataTable(
             columns: [
-              DataColumn(label: Text('Cost(PhP)')),
+              DataColumn(label: Text('Nutrient')),
               DataColumn(label: Text('Economic')),
-              DataColumn(label: Text('Target'))
             ],
             rows: [
               DataRow(cells: [
                 DataCell(Text('N')),
                 DataCell(Text(widget.nCost[0].toStringAsFixed(2))),
-                DataCell(Text(widget.nCost[1].toStringAsFixed(2))),
               ]),
               DataRow(cells: [
                 DataCell(Text('P₂O₅')),
                 DataCell(Text(widget.pCost[0].toStringAsFixed(2))),
-                DataCell(Text(widget.pCost[1].toStringAsFixed(2))),
               ]),
               DataRow(cells: [
                 DataCell(Text('K₂O')),
                 DataCell(Text(widget.kCost[0].toStringAsFixed(2))),
-                DataCell(Text(widget.kCost[1].toStringAsFixed(2))),
               ]),
             ],
           ),
-        ])
+        ]),
+          ListView(children: <Widget>[
+              SizedBox(height:10),
+              Center(
+                  child: Text(
+                    'Amount of Fertilizer',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  )),
+              DataTable(
+                columns: [
+                  DataColumn(label: Text('')),
+                  DataColumn(label: Text('kg')),
+                  DataColumn(label: Text('Bag')),
+                ],
+                rows: [
+                  DataRow(cells: [
+                    DataCell(Text(capitalize(widget.caseCH[0]))),
+                    DataCell(Text(widget.AMF[0].toStringAsFixed(2))),
+                    DataCell(Text( (widget.AMF[0]/50).toStringAsFixed(2)  )),
+                  ]),
+                  DataRow(cells: [
+                    DataCell(Text(capitalize(widget.caseCH[1]))),
+                    DataCell(Text(widget.AMF[1].toStringAsFixed(2))),
+                    DataCell(Text((widget.AMF[1]/50).toStringAsFixed(2))),
+                  ]),
+                  DataRow(cells: [
+                    DataCell(Text(capitalize(widget.caseCH[2]))),
+                    DataCell(Text(widget.AMF[2].toStringAsFixed(2))),
+                    DataCell(Text((widget.AMF[2]/50).toStringAsFixed(2))),
+                  ]),
+                ],
+              ),
+            SizedBox(height:10),
+            Center(
+                child: Text(
+                  'Nutrient Cost Analysis',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                )),
+            DataTable(
+              columns: [
+                DataColumn(label: Text('Nutrient')),
+                DataColumn(label: Text('Target'))
+              ],
+              rows: [
+                DataRow(cells: [
+                  DataCell(Text('N')),
+                  DataCell(Text(widget.nCost[1].toStringAsFixed(2))),
+                ]),
+                DataRow(cells: [
+                  DataCell(Text('P₂O₅')),
+                  DataCell(Text(widget.pCost[1].toStringAsFixed(2))),
+                ]),
+                DataRow(cells: [
+                  DataCell(Text('K₂O')),
+                  DataCell(Text(widget.kCost[1].toStringAsFixed(2))),
+                ]),
+              ],
+            ),
+          ]),
+        ],
+      ),
     );
   }
 }
