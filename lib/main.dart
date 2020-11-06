@@ -249,27 +249,25 @@ class _MyHomePageState extends State<MyHomePage> {
   void process(area,ch,caseCH) {
     var AMF1, AMF2, AMF3;
 
-    var frr = {
-      "n" : (((yTarget[ch]-ySupply[ch])*nRemoval[ch]['n'])/fRecovery[ch]['n']) * area,
-      "p" : (((yTarget[ch]-ySupply[ch])*nRemoval[ch]['p'])/fRecovery[ch]['p']) * area,
-      "k" : (((yTarget[ch]-ySupply[ch])*nRemoval[ch]['k'])/fRecovery[ch]['k']) * area,
-    };
+    var frrN = (((yTarget[ch]-ySupply[ch])*nRemoval[ch]['n'])/fRecovery[ch]['n']) * area;
+    var frrP = (((yTarget[ch]-ySupply[ch])*nRemoval[ch]['p'])/fRecovery[ch]['p']) * area;
+    var frrK = (((yTarget[ch]-ySupply[ch])*nRemoval[ch]['k'])/fRecovery[ch]['k']) * area;
 
-    AMF1 = frr['k'] / fType[caseCH[0]][2];
+    AMF1 = frrK / fType[caseCH[0]][2];
 
     if(caseCH[1] == "solophos"){
       if(caseCH[0] == "muriateOfPotash"){
-        AMF2 = frr['p'] / fType[caseCH[1]][1];
-        AMF3 = frr['n'] / fType[caseCH[2]][0];
+        AMF2 = frrP / fType[caseCH[1]][1];
+        AMF3 = frrN / fType[caseCH[2]][0];
       }else{
-        AMF2 = (frr['p'] - frr['k']) / fType[caseCH[1]][1];
-        AMF3 = (frr['n'] - frr['k']) / fType[caseCH[2]][0];
+        AMF2 = (frrP - frrK) / fType[caseCH[1]][1];
+        AMF3 = (frrN - frrK) / fType[caseCH[2]][0];
       }
     }
     else if (caseCH[1] == "ammophosphate"){
-      AMF2 = ((frr['p']-frr['k']) / fType[caseCH[1]][1]) * fType[caseCH[1]][0];
+      AMF2 = ((frrP-frrK) / fType[caseCH[1]][1]) * fType[caseCH[1]][0];
 
-      AMF3 = (frr['n']-frr['k']-AMF2) / fType[caseCH[2]][0];
+      AMF3 = (frrN-frrK-AMF2) / fType[caseCH[2]][0];
     }
 
     List<String> forN=[],forP=[],forK=[];
@@ -285,19 +283,13 @@ class _MyHomePageState extends State<MyHomePage> {
         forK.add(caseCH[i]);
     }
 
-    print(forN);
-    print(forP);
-    print(forK);
+    List<double> frr_target = [frrN,frrK,frrP];
 
-
-//    Navigator.push(
-//      context,
-//      MaterialPageRoute(builder: (context) => resultsPage(area:area, caseCH: caseCH, AMF: [AMF1,AMF2,AMF3])),
-//    );
+    List<double> AMF = [AMF1,AMF2,AMF3];
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SecondPage(forN:forN, forP:forP, forK: forK, AMF: [AMF1,AMF2,AMF3], caseCH: caseCH, area: area, ch: ch)),
+      MaterialPageRoute(builder: (context) => SecondPage(forN:forN, forP:forP, forK: forK, AMF: AMF, caseCH: caseCH, area: area, ch: ch, frr_target: frr_target)),
     );
 
   }
@@ -518,10 +510,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
 class SecondPage extends StatefulWidget {
   final List<String> forN,forP,forK, caseCH;
-  final List<dynamic> AMF;
+  final List<double> AMF;
   final double area;
   final String ch;
-  SecondPage({Key key, @required this.forN, @required this.forP, @required this.forK, @required this.AMF, @required this.caseCH, @required this.area, @required this.ch}) : super(key: key);
+  final List<double> frr_target;
+  SecondPage({Key key, @required this.forN, @required this.forP, @required this.forK, @required this.AMF, @required this.caseCH, @required this.area, @required this.ch, @required this.frr_target}) : super(key: key);
 
   @override
   _SecondPageState createState() => _SecondPageState();
@@ -604,6 +597,29 @@ class _SecondPageState extends State<SecondPage> {
     });
   }
 
+  List<double> computeAMFEcon(frrN,frrP,frrK){
+    var AMF1_econ, AMF2_econ, AMF3_econ;
+
+    AMF1_econ = frrK / fType[widget.caseCH[0]][2];
+
+    if(widget.caseCH[1] == "solophos"){
+      if(widget.caseCH[0] == "muriateOfPotash"){
+        AMF2_econ = frrP / fType[widget.caseCH[1]][1];
+        AMF3_econ = frrN / fType[widget.caseCH[2]][0];
+      }else{
+        AMF2_econ = (frrP - frrK) / fType[widget.caseCH[1]][1];
+        AMF3_econ = (frrN - frrK) / fType[widget.caseCH[2]][0];
+      }
+    }
+    else if (widget.caseCH[1] == "ammophosphate"){
+      AMF2_econ = ((frrP-frrK) / fType[widget.caseCH[1]][1]) * fType[widget.caseCH[1]][0];
+
+      AMF3_econ = (frrN-frrK-AMF2_econ) / fType[widget.caseCH[2]][0];
+    }
+
+    return([AMF1_econ,AMF2_econ,AMF3_econ]);
+  }
+
   Future<List<double>> computeElement(chosen,element,index) async {
     //a
     var rate = ((yTarget[widget.ch]-ySupply[widget.ch])*multiplier[element]/fRecovery[widget.ch][element]) * widget.area;
@@ -633,7 +649,8 @@ class _SecondPageState extends State<SecondPage> {
       price = await cost6;
     }
 
-    var y,z,econ, max, economic, target;
+    var y,z,econ, max, economic, target, frr;
+
     for(var i = 1 ; i <= 397; i++){
       y = -a*pow(i,2)+b*i+c;
       z = i*(price/(fType[chosen][index]*50));
@@ -642,16 +659,18 @@ class _SecondPageState extends State<SecondPage> {
       if(i == 1){
         max = y-econ;
         economic = z;
+        frr = i;
       }
       if(max < y-econ){
         max = y-econ;
         economic = z;
+        frr = i;
       }
     }
 
     target = rate.ceil()*(price/(fType[chosen][index]*50));
 
-    return [economic,target];
+    return [economic,target,double.parse(frr.toString())];
 
     //print("Max: $max Economic N: $economic Target N: $target");
   }
@@ -905,9 +924,11 @@ class _SecondPageState extends State<SecondPage> {
                       var pCost = await computeElement(chosenP,'p',1);
                       var kCost = await computeElement(chosenK,'k',2);
 
+                      var AMF_econ = computeAMFEcon(nCost[2],pCost[2],kCost[2]);
+
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => resultsPage(nCost:nCost, pCost:pCost, kCost:kCost, AMF: widget.AMF, caseCH: widget.caseCH)),
+                        MaterialPageRoute(builder: (context) => resultsPage(nCost:nCost, pCost:pCost, kCost:kCost, AMF: widget.AMF, AMF_econ: AMF_econ, caseCH: widget.caseCH, frr_target: widget.frr_target, frr_econ: [nCost[2],pCost[2],kCost[2]])),
                       );
 //                    FocusScopeNode currentFocus = FocusScope.of(context);
 //                    if (!currentFocus.hasPrimaryFocus) {
@@ -1048,9 +1069,10 @@ class _SecondPageState extends State<SecondPage> {
 
 class resultsPage extends StatefulWidget {
   final List<double> nCost,pCost,kCost;
-  final List<dynamic> AMF;
+  final List<double> AMF, AMF_econ;
   final List<String> caseCH;
-  resultsPage({Key key, @required this.nCost, @required this.pCost, @required this.kCost, @required this.AMF, @required this.caseCH}) : super(key: key);
+  final List<double> frr_target, frr_econ;
+  resultsPage({Key key, @required this.nCost, @required this.pCost, @required this.kCost, @required this.AMF, @required this.AMF_econ, @required this.caseCH, @required this.frr_target, @required this.frr_econ}) : super(key: key);
 
   @override
   _resultsPageState createState() => _resultsPageState();
@@ -1079,7 +1101,57 @@ class _resultsPageState extends State<resultsPage> {
         controller: controller,
         children: <Widget>[
       ListView(children: <Widget>[
-          SizedBox(height:10),
+        SizedBox(height:10),
+        Center(
+            child: Text(
+              'Fertilizer Rate Recommendation',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            )),
+        DataTable(
+          columns: [
+            DataColumn(label: Text('N')),
+            DataColumn(label: Text('P₂O₅')),
+            DataColumn(label: Text('K₂O')),
+          ],
+          rows: [
+            DataRow(cells: [
+              DataCell(Text(widget.frr_econ[0].toStringAsFixed(2))),
+              DataCell(Text(widget.frr_econ[1].toStringAsFixed(2))),
+              DataCell(Text(widget.frr_econ[2].toStringAsFixed(2))),
+            ]),
+          ],
+        ),
+        SizedBox(height:20),
+        Center(
+            child: Text(
+              'Amount of Fertilizer',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            )),
+        DataTable(
+          columns: [
+            DataColumn(label: Text('')),
+            DataColumn(label: Text('kg')),
+            DataColumn(label: Text('Bag')),
+          ],
+          rows: [
+            DataRow(cells: [
+              DataCell(Text(capitalize(widget.caseCH[0]))),
+              DataCell(Text(widget.AMF_econ[0].toStringAsFixed(2))),
+              DataCell(Text( (widget.AMF_econ[0]/50).toStringAsFixed(2)  )),
+            ]),
+            DataRow(cells: [
+              DataCell(Text(capitalize(widget.caseCH[1]))),
+              DataCell(Text(widget.AMF_econ[1].toStringAsFixed(2))),
+              DataCell(Text((widget.AMF_econ[1]/50).toStringAsFixed(2))),
+            ]),
+            DataRow(cells: [
+              DataCell(Text(capitalize(widget.caseCH[2]))),
+              DataCell(Text(widget.AMF_econ[2].toStringAsFixed(2))),
+              DataCell(Text((widget.AMF_econ[2]/50).toStringAsFixed(2))),
+            ]),
+          ],
+        ),
+          SizedBox(height:20),
           Center(
               child: Text(
                 'Nutrient Cost Analysis',
@@ -1107,7 +1179,27 @@ class _resultsPageState extends State<resultsPage> {
           ),
         ]),
           ListView(children: <Widget>[
-              SizedBox(height:10),
+            SizedBox(height:10),
+            Center(
+                child: Text(
+                  'Fertilizer Rate Recommendation',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                )),
+            DataTable(
+              columns: [
+                DataColumn(label: Text('N')),
+                DataColumn(label: Text('P₂O₅')),
+                DataColumn(label: Text('K₂O')),
+              ],
+              rows: [
+                DataRow(cells: [
+                  DataCell(Text(widget.frr_target[0].toStringAsFixed(2))),
+                  DataCell(Text(widget.frr_target[1].toStringAsFixed(2))),
+                  DataCell(Text(widget.frr_target[2].toStringAsFixed(2))),
+                ]),
+              ],
+            ),
+              SizedBox(height:20),
               Center(
                   child: Text(
                     'Amount of Fertilizer',
@@ -1137,7 +1229,7 @@ class _resultsPageState extends State<resultsPage> {
                   ]),
                 ],
               ),
-            SizedBox(height:10),
+            SizedBox(height:20),
             Center(
                 child: Text(
                   'Nutrient Cost Analysis',
