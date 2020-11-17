@@ -2,40 +2,44 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tabbar/tabbar.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:progress_dialog/progress_dialog.dart';
+import 'package:intl/intl.dart';
 
 String capitalize(word) {
   return "${word[0].toUpperCase()}${word.substring(1)}";
 }
 
-const yTarget = {
-  "albay-opv" : 6,
-  "albay-hybrid" : 6,
-  "bukidnon-opv" : 6,
-  "bukidnon-hybrid" : 6,
-  "cebu-opv" : 6,
-  "cebu-hybrid" : 6,
-  "iloilo-opv" : 6,
-  "iloilo-hybrid" : 6,
-  "isabela-opv" : 6,
-  "isabela-hybrid" : 6,
-  "nueva ecija-opv" : 8.72,
-  "nueva ecija-hybrid" : 8.72,
-};
+//const yTarget = {
+//  "albay-opv" : 6,
+//  "albay-hybrid" : 6,
+//  "bukidnon-opv" : 6,
+//  "bukidnon-hybrid" : 6,
+//  "cebu-opv" : 6,
+//  "cebu-hybrid" : 6,
+//  "iloilo-opv" : 6,
+//  "iloilo-hybrid" : 6,
+//  "isabela-opv" : 6,
+//  "isabela-hybrid" : 6,
+//  "nueva ecija-opv" : 8.72,
+//  "nueva ecija-hybrid" : 8.72,
+//};
 
-const ySupply = {
-  "albay-opv" : 2.4,
-  "albay-hybrid" : 2.4,
-  "bukidnon-opv" : 2.92,
-  "bukidnon-hybrid" : 2.92,
-  "cebu-opv" : 1.86,
-  "cebu-hybrid" : 1.86,
-  "iloilo-opv" : 2.34,
-  "iloilo-hybrid" : 2.34,
-  "isabela-opv" :2.11,
-  "isabela-hybrid" : 2.11,
-  "nueva ecija-opv" : 1.66,
-  "nueva ecija-hybrid" : 1.66,
-};
+//const ySupply = {
+//  "albay-opv" : 2.4,
+//  "albay-hybrid" : 2.4,
+//  "bukidnon-opv" : 2.92,
+//  "bukidnon-hybrid" : 2.92,
+//  "cebu-opv" : 1.86,
+//  "cebu-hybrid" : 1.86,
+//  "iloilo-opv" : 2.34,
+//  "iloilo-hybrid" : 2.34,
+//  "isabela-opv" :2.11,
+//  "isabela-hybrid" : 2.11,
+//  "nueva ecija-opv" : 1.66,
+//  "nueva ecija-hybrid" : 1.66,
+//};
 
 const nRemoval = {
   "albay-opv" : {
@@ -242,16 +246,52 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   TextEditingController _areaController = new TextEditingController();
+  TextEditingController _tyController = new TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  String site, variety;
+  String site, variety, municipality, brgy, growingSeason;
+  double ySupply;
   String _choice = 'Yes';
+  List<String> municipalities = [], brgys = [];
 
-  void process(area,ch,caseCH) {
+  void process(area,ch,caseCH,yTarget,growingSeason) async {
+    final ProgressDialog pr = ProgressDialog(context, isDismissible: false);
+
+    pr.style(
+      message: 'Processing values'
+    );
+
+    await pr.show();
+
+    var place_index = {
+      'albay' : 9,
+      'bukidnon' : 16,
+      'cebu' : 23,
+      'iloilo' : 30,
+      'isabela' : 37,
+      'nueva ecija' : 44,
+    };
+    var growingSeasonIndex = (growingSeason == "Dry") ? 0 : 2;
+
+    var response =
+        await http.get('https://spreadsheets.google.com/feeds/cells/17gN4VZB7jIh5MX9uXISDS9IIl_vvRZr2WfB6r9iulEM/od6/public/basic?alt=json');
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      var gsheets = json.decode(response.body);
+      ySupply = double.parse(gsheets['feed']['entry'][place_index[ch.split('-')[0]] + growingSeasonIndex]['content']['\$t']);
+      print(ySupply);
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load indigenous supply');
+    }
+
     var AMF1, AMF2, AMF3;
 
-    var frrN = (((yTarget[ch]-ySupply[ch])*nRemoval[ch]['n'])/fRecovery[ch]['n']) * area;
-    var frrP = (((yTarget[ch]-ySupply[ch])*nRemoval[ch]['p'])/fRecovery[ch]['p']) * area;
-    var frrK = (((yTarget[ch]-ySupply[ch])*nRemoval[ch]['k'])/fRecovery[ch]['k']) * area;
+    var frrN = (((yTarget-ySupply)*nRemoval[ch]['n'])/fRecovery[ch]['n']) * area;
+    var frrP = (((yTarget-ySupply)*nRemoval[ch]['p'])/fRecovery[ch]['p']) * area;
+    var frrK = (((yTarget-ySupply)*nRemoval[ch]['k'])/fRecovery[ch]['k']) * area;
 
     AMF1 = frrK / fType[caseCH[0]][2];
 
@@ -287,9 +327,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
     List<double> AMF = [AMF1,AMF2,AMF3];
 
+    await pr.hide();
+
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SecondPage(forN:forN, forP:forP, forK: forK, AMF: AMF, caseCH: caseCH, area: area, ch: ch, frr_target: frr_target)),
+      MaterialPageRoute(builder: (context) => SecondPage(forN:forN, forP:forP, forK: forK, AMF: AMF, caseCH: caseCH, area: area, ch: ch, frr_target: frr_target, yTarget: yTarget, ySupply: ySupply)),
     );
 
   }
@@ -331,14 +373,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      TextFormField(
-                        validator: (val) => val.isEmpty ? 'field required' : null,
-                        keyboardType: TextInputType.number,
-                        //autofocus: true,
-                        decoration: new InputDecoration(
-                            labelText: 'Area (HA)'),
-                        controller: _areaController,
-                      ),
                       DropdownButtonFormField<String>(
                         validator: (value) => value == null ? 'field required' : null,
                         isExpanded: true,
@@ -347,10 +381,27 @@ class _MyHomePageState extends State<MyHomePage> {
                         iconSize: 24,
                         elevation: 16,
                         style: TextStyle(color: Colors.black, fontSize:15),
-                        hint: Text('Site'),
+                        hint: Text('Province'),
                         onChanged: (String newValue) {
                           setState(() {
-                            site = newValue;
+                            if(site != newValue){
+                              site = newValue;
+                              municipality = null;
+                              brgy = null;
+                              if(site == "Albay"){
+                                municipalities = ['Ligao City'];
+                              }else if(site == "Bukidnon"){
+                                municipalities = ['Maramag'];
+                              }else if(site == "Cebu"){
+                                municipalities = ['Barili'];
+                              }else if(site == "Iloilo"){
+                                municipalities = ['Lambunao'];
+                              }else if(site == "Isabela"){
+                                municipalities = ['Echague'];
+                              }else if(site == "Nueva Ecija"){
+                                municipalities = ['Lupao'];
+                              }
+                            }
                           });
                         },
                         items: <String>[
@@ -367,6 +418,115 @@ class _MyHomePageState extends State<MyHomePage> {
                             child: Text(value),
                           );
                         }).toList(),
+                      ),
+                      DropdownButtonFormField<String>(
+                        validator: (value) => value == null ? 'field required' : null,
+                        isExpanded: true,
+                        value: municipality,
+                        icon: Icon(Icons.arrow_drop_down),
+                        iconSize: 24,
+                        elevation: 16,
+                        style: TextStyle(color: Colors.black, fontSize:15),
+                        hint: Text('Municipality'),
+                        onChanged: (String newValue) {
+                          setState(() {
+                            if(municipality != newValue){
+                              municipality = newValue;
+                              brgy = null;
+                              if(municipality == "Ligao City"){
+                                brgys = ['Tuburan'];
+                              }else if(municipality == "Maramag"){
+                                brgys = ['Dologon'];
+                              }else if(municipality == "Barili"){
+                                brgys = ['Bagakay'];
+                              }else if(municipality == "Lambunao"){
+                                brgys = ['Agsirab'];
+                              }else if(municipality == "Echague"){
+                                brgys = ['Pag-asa'];
+                              }else if(municipality == "Lupao"){
+                                brgys = ['Parista'];
+                              }
+                            }
+                          });
+                        },
+                        items: municipalities
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ),
+                      DropdownButtonFormField<String>(
+                        validator: (value) => value == null ? 'field required' : null,
+                        isExpanded: true,
+                        value: brgy,
+                        icon: Icon(Icons.arrow_drop_down),
+                        iconSize: 24,
+                        elevation: 16,
+                        style: TextStyle(color: Colors.black, fontSize:15),
+                        hint: Text('Barangay'),
+                        onChanged: (String newValue) {
+                          setState(() {
+                            brgy = newValue;
+                          });
+                        },
+                        items: brgys
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ),
+                      DropdownButtonFormField<String>(
+                        validator: (value) => value == null ? 'field required' : null,
+                        isExpanded: true,
+                        value: growingSeason,
+                        icon: Icon(Icons.arrow_drop_down),
+                        iconSize: 24,
+                        elevation: 16,
+                        style: TextStyle(color: Colors.black, fontSize:15),
+                        hint: Text('Growing Season'),
+                        onChanged: (String newValue) {
+                          setState(() {
+                            growingSeason = newValue;
+                          });
+                        },
+                        items: <String>[
+                          'Dry',
+                          'Wet',
+                        ]
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ),
+                      TextFormField(
+                        validator: (val) => val.isEmpty ? 'field required' : null,
+                        keyboardType: TextInputType.number,
+                        //autofocus: true,
+                        decoration: new InputDecoration(
+                            labelText: 'Area (ha)'),
+                        controller: _areaController,
+                      ),
+                      TextFormField(
+                        validator: (val) {
+                          if(val.isEmpty) {
+                            return 'field requried';
+                          }
+                          if(double.parse(val) < 1 || double.parse(val) > 20) {
+                            return 'Please only enter values from 1-20';
+                          }
+                          return null;
+                        },
+                        keyboardType: TextInputType.number,
+                        //autofocus: true,
+                        decoration: new InputDecoration(
+                            labelText: 'Target Yield (t/ha)'),
+                        controller: _tyController,
                       ),
                       DropdownButtonFormField<String>(
                         validator: (value) => value == null ? 'field required' : null,
@@ -394,7 +554,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         }).toList(),
                       ),
                       SizedBox(height:20),
-                      Text("Which fertilizer combination you would like to use?"),
+                      Text("Which fertilizer combination do you prefer?"),
                       ListTile(
                         title: const Text('Complete, Solophos, Urea'),
                         leading: Radio(
@@ -489,7 +649,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 onPressed: () {
                   if(_formKey.currentState.validate()){
-                    process(double.parse(_areaController.text),(site + '-' + variety).toLowerCase(),_choice.split(','));
+                    process(double.parse(_areaController.text),(site + '-' + variety).toLowerCase(),_choice.split(','),double.parse(_tyController.text), growingSeason);
 //                    FocusScopeNode currentFocus = FocusScope.of(context);
 //                    if (!currentFocus.hasPrimaryFocus) {
 //                      currentFocus.unfocus();
@@ -511,10 +671,10 @@ class _MyHomePageState extends State<MyHomePage> {
 class SecondPage extends StatefulWidget {
   final List<String> forN,forP,forK, caseCH;
   final List<double> AMF;
-  final double area;
+  final double area, yTarget, ySupply;
   final String ch;
   final List<double> frr_target;
-  SecondPage({Key key, @required this.forN, @required this.forP, @required this.forK, @required this.AMF, @required this.caseCH, @required this.area, @required this.ch, @required this.frr_target}) : super(key: key);
+  SecondPage({Key key, @required this.forN, @required this.forP, @required this.forK, @required this.AMF, @required this.caseCH, @required this.area, @required this.ch, @required this.frr_target, @required this.yTarget, @required this.ySupply}) : super(key: key);
 
   @override
   _SecondPageState createState() => _SecondPageState();
@@ -536,6 +696,7 @@ class _SecondPageState extends State<SecondPage> {
   TextEditingController _cost4Controller = new TextEditingController();
   TextEditingController _cost5Controller = new TextEditingController();
   TextEditingController _cost6Controller = new TextEditingController();
+  final formatter = new NumberFormat("#,###.##");
 
   Future<void> _changeCost(cost) async {
     final SharedPreferences prefs = await _prefs;
@@ -622,16 +783,16 @@ class _SecondPageState extends State<SecondPage> {
 
   Future<List<double>> computeElement(chosen,element,index) async {
     //a
-    var rate = ((yTarget[widget.ch]-ySupply[widget.ch])*multiplier[element]/fRecovery[widget.ch][element]) * widget.area;
+    var rate = ((widget.yTarget-widget.ySupply)*multiplier[element]/fRecovery[widget.ch][element]) * widget.area;
     //print(rate.ceil());
 
-    var a = (yTarget[widget.ch]-ySupply[widget.ch])/pow(rate,2);
+    var a = (widget.yTarget-widget.ySupply)/pow(rate,2);
     //print(a);
     //b
-    var b = (yTarget[widget.ch] + (pow(rate,2)*a) - ySupply[widget.ch]) / rate;
+    var b = (widget.yTarget + (pow(rate,2)*a) - widget.ySupply) / rate;
     //print(b);
     //c
-    var c = ySupply[widget.ch];
+    var c = widget.ySupply;
     //print(c);
 
     var price; //depends on the chosen variable
@@ -654,7 +815,7 @@ class _SecondPageState extends State<SecondPage> {
     for(var i = 1 ; i <= 397; i++){
       y = -a*pow(i,2)+b*i+c;
       z = i*(price/(fType[chosen][index]*50));
-      econ = ( (yTarget[widget.ch]-ySupply[widget.ch]) / (rate) ) * i + ySupply[widget.ch];
+      econ = ( (widget.yTarget-widget.ySupply) / (rate) ) * i + widget.ySupply;
 
       if(i == 1){
         max = y-econ;
@@ -772,68 +933,68 @@ class _SecondPageState extends State<SecondPage> {
                         DataTable(
                           columns: [
                             DataColumn(label: Text('Fertilizer Material')),
-                            DataColumn(label: Text('Cost (PHP)')),
+                            DataColumn(label: Text('Cost(PHP)')),
                           ],
                           rows: [
                             DataRow(cells: [
-                              DataCell(Text('Complete')),
+                              DataCell(Text('Complete (14-14-14)')),
                               DataCell(
                                   FutureBuilder(
                                     future: cost1,
                                     builder: (BuildContext context, AsyncSnapshot snapshot) {
                                       _cost1Controller.text = snapshot.data.toString();
-                                      return Text(snapshot.data.toString());
+                                      return Text(formatter.format(snapshot.data));
                                     }
                                   )
                               ),
                             ]),
                             DataRow(cells: [
-                              DataCell(Text('Urea')),
+                              DataCell(Text('Urea (46-0-0)')),
                               DataCell(FutureBuilder(
                                   future: cost2,
                                   builder: (BuildContext context, AsyncSnapshot snapshot) {
                                     _cost2Controller.text = snapshot.data.toString();
-                                    return Text(snapshot.data.toString());
+                                    return Text(formatter.format(snapshot.data));
                                   }
                               )),
                             ]),
                             DataRow(cells: [
-                              DataCell(Text('Ammosulphate')),
+                              DataCell(Text('Ammosulphate (21-0-0)')),
                               DataCell(FutureBuilder(
                                   future: cost3,
                                   builder: (BuildContext context, AsyncSnapshot snapshot) {
                                     _cost3Controller.text = snapshot.data.toString();
-                                    return Text(snapshot.data.toString());
+                                    return Text(formatter.format(snapshot.data));
                                   }
                               )),
                             ]),
                             DataRow(cells: [
-                              DataCell(Text('Ammophosphate')),
+                              DataCell(Text('Ammophosphate (16-20-0)')),
                               DataCell(FutureBuilder(
                                   future: cost4,
                                   builder: (BuildContext context, AsyncSnapshot snapshot) {
                                     _cost4Controller.text = snapshot.data.toString();
-                                    return Text(snapshot.data.toString());
+                                    return Text(formatter.format(snapshot.data));
                                   }
                               )),
                             ]),
                             DataRow(cells: [
-                              DataCell(Text('Muriate of potash')),
+                              DataCell(Text('Muriate of potash (0-0-60)')),
                               DataCell(FutureBuilder(
                                   future: cost5,
                                   builder: (BuildContext context, AsyncSnapshot snapshot) {
                                     _cost5Controller.text = snapshot.data.toString();
-                                    return Text(snapshot.data.toString());
+                                    return Text(formatter.format(snapshot.data));
                                   }
                               )),
                             ]),
                             DataRow(cells: [
-                              DataCell(Text('Solophos')),
+                              DataCell(Text('Solophos (0-18-0)')),
                               DataCell(FutureBuilder(
                                   future: cost6,
                                   builder: (BuildContext context, AsyncSnapshot snapshot) {
                                     _cost6Controller.text = snapshot.data.toString();
-                                    return Text(snapshot.data.toString());
+                                    return Text(formatter.format(snapshot.data));
                                   }
                               )),
                             ]),
@@ -1080,6 +1241,8 @@ class resultsPage extends StatefulWidget {
 
 class _resultsPageState extends State<resultsPage> {
   final controller = PageController();
+  final formatter = new NumberFormat("#,###.##");
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1104,7 +1267,7 @@ class _resultsPageState extends State<resultsPage> {
         SizedBox(height:10),
         Center(
             child: Text(
-              'Fertilizer Rate Recommendation',
+              'Fertilizer Rate Recommendation (kg)',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             )),
         DataTable(
@@ -1160,20 +1323,20 @@ class _resultsPageState extends State<resultsPage> {
           DataTable(
             columns: [
               DataColumn(label: Text('Nutrient')),
-              DataColumn(label: Text('Economic')),
+              DataColumn(label: Text('Cost (PHP)')),
             ],
             rows: [
               DataRow(cells: [
                 DataCell(Text('N')),
-                DataCell(Text(widget.nCost[0].toStringAsFixed(2))),
+                DataCell(Text(formatter.format(widget.nCost[0]))),
               ]),
               DataRow(cells: [
                 DataCell(Text('P₂O₅')),
-                DataCell(Text(widget.pCost[0].toStringAsFixed(2))),
+                DataCell(Text(formatter.format(widget.pCost[0]))),
               ]),
               DataRow(cells: [
                 DataCell(Text('K₂O')),
-                DataCell(Text(widget.kCost[0].toStringAsFixed(2))),
+                DataCell(Text(formatter.format(widget.kCost[0]))),
               ]),
             ],
           ),
@@ -1182,7 +1345,7 @@ class _resultsPageState extends State<resultsPage> {
             SizedBox(height:10),
             Center(
                 child: Text(
-                  'Fertilizer Rate Recommendation',
+                  'Fertilizer Rate Recommendation (kg)',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 )),
             DataTable(
@@ -1238,7 +1401,7 @@ class _resultsPageState extends State<resultsPage> {
             DataTable(
               columns: [
                 DataColumn(label: Text('Nutrient')),
-                DataColumn(label: Text('Target'))
+                DataColumn(label: Text('Cost (PHP)'))
               ],
               rows: [
                 DataRow(cells: [
