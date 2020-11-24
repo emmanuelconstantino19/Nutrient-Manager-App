@@ -185,12 +185,6 @@ const prices={
   "solophos": 980.00,
 };
 
-const multiplier={
-  'n': 15.6,
-  'p': 2.9,
-  'k': 3.8
-};
-
 void main() {
   runApp(MyApp());
 }
@@ -323,7 +317,7 @@ class _MyHomePageState extends State<MyHomePage> {
         forK.add(caseCH[i]);
     }
 
-    List<double> frr_target = [frrN,frrK,frrP];
+    List<double> frr_target = [frrN,frrP,frrK];
 
     List<double> AMF = [AMF1,AMF2,AMF3];
 
@@ -783,8 +777,7 @@ class _SecondPageState extends State<SecondPage> {
 
   Future<List<double>> computeElement(chosen,element,index) async {
     //a
-    var rate = ((widget.yTarget-widget.ySupply)*multiplier[element]/fRecovery[widget.ch][element]) * widget.area;
-    //print(rate.ceil());
+    var rate = (((widget.yTarget-widget.ySupply)*nRemoval[widget.ch][element])/fRecovery[widget.ch][element]) * widget.area;
 
     var a = (widget.yTarget-widget.ySupply)/pow(rate,2);
     //print(a);
@@ -829,9 +822,9 @@ class _SecondPageState extends State<SecondPage> {
       }
     }
 
-    target = rate.ceil()*(price/(fType[chosen][index]*50));
+    target = rate.round()*(price/(fType[chosen][index]*50));
 
-    return [economic,target,double.parse(frr.toString())];
+    return [economic,target,double.parse(frr.toString()),price];
 
     //print("Max: $max Economic N: $economic Target N: $target");
   }
@@ -933,7 +926,7 @@ class _SecondPageState extends State<SecondPage> {
                         DataTable(
                           columns: [
                             DataColumn(label: Text('Fertilizer Material')),
-                            DataColumn(label: Text('Cost(PHP)')),
+                            DataColumn(label: Expanded(child:Text('Cost per bag(PHP)'))),
                           ],
                           rows: [
                             DataRow(cells: [
@@ -1062,7 +1055,7 @@ class _SecondPageState extends State<SecondPage> {
                               .map<DropdownMenuItem<String>>((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
-                              child: Text(value),
+                              child: Text( (value=='muriateOfPotash') ? "muriate of potash" : value ),
                             );
                           }).toList(),
                         ),
@@ -1089,7 +1082,7 @@ class _SecondPageState extends State<SecondPage> {
 
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => resultsPage(nCost:nCost, pCost:pCost, kCost:kCost, AMF: widget.AMF, AMF_econ: AMF_econ, caseCH: widget.caseCH, frr_target: widget.frr_target, frr_econ: [nCost[2],pCost[2],kCost[2]])),
+                        MaterialPageRoute(builder: (context) => resultsPage(nCost:nCost, pCost:pCost, kCost:kCost, AMF: widget.AMF, AMF_econ: AMF_econ, caseCH: widget.caseCH, frr_target: widget.frr_target, frr_econ: [nCost[2],pCost[2],kCost[2]], area:widget.area)),
                       );
 //                    FocusScopeNode currentFocus = FocusScope.of(context);
 //                    if (!currentFocus.hasPrimaryFocus) {
@@ -1233,7 +1226,8 @@ class resultsPage extends StatefulWidget {
   final List<double> AMF, AMF_econ;
   final List<String> caseCH;
   final List<double> frr_target, frr_econ;
-  resultsPage({Key key, @required this.nCost, @required this.pCost, @required this.kCost, @required this.AMF, @required this.AMF_econ, @required this.caseCH, @required this.frr_target, @required this.frr_econ}) : super(key: key);
+  final double area;
+  resultsPage({Key key, @required this.nCost, @required this.pCost, @required this.kCost, @required this.AMF, @required this.AMF_econ, @required this.caseCH, @required this.frr_target, @required this.frr_econ, @required this.area}) : super(key: key);
 
   @override
   _resultsPageState createState() => _resultsPageState();
@@ -1254,8 +1248,8 @@ class _resultsPageState extends State<resultsPage> {
           child: TabbarHeader(
             controller: controller,
             tabs: [
-              Tab(text: "Economic"),
-              Tab(text: "Target"),
+              Tab(text: "Economic Yield"),
+              Tab(text: "Target Yield"),
             ],
           ),
         ),
@@ -1272,12 +1266,20 @@ class _resultsPageState extends State<resultsPage> {
             )),
         DataTable(
           columns: [
+            DataColumn(label: Text('')),
             DataColumn(label: Text('N')),
             DataColumn(label: Text('P₂O₅')),
             DataColumn(label: Text('K₂O')),
           ],
           rows: [
             DataRow(cells: [
+              DataCell(Text("per hectare")),
+              DataCell(Text( (widget.frr_econ[0]/widget.area).toStringAsFixed(2))),
+              DataCell(Text( (widget.frr_econ[1]/widget.area).toStringAsFixed(2))),
+              DataCell(Text( (widget.frr_econ[2]/widget.area).toStringAsFixed(2))),
+            ]),
+            DataRow(cells: [
+              DataCell(Text("farmer's area")),
               DataCell(Text(widget.frr_econ[0].toStringAsFixed(2))),
               DataCell(Text(widget.frr_econ[1].toStringAsFixed(2))),
               DataCell(Text(widget.frr_econ[2].toStringAsFixed(2))),
@@ -1290,27 +1292,133 @@ class _resultsPageState extends State<resultsPage> {
               'Amount of Fertilizer',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             )),
+        Center(
+            child: Text(
+              "per hectare",
+              style: TextStyle(fontSize: 15),
+            )),
         DataTable(
           columns: [
             DataColumn(label: Text('')),
             DataColumn(label: Text('kg')),
             DataColumn(label: Text('Bag')),
+            DataColumn(label: Text('Cost\n(PHP)',overflow: TextOverflow.ellipsis,)),
           ],
           rows: [
             DataRow(cells: [
-              DataCell(Text(capitalize(widget.caseCH[0]))),
+              DataCell(
+                Container(
+                    width:MediaQuery.of(context).size.width/10,
+                    child: Text(capitalize(widget.caseCH[0]))
+                ),
+              ),
+              DataCell(Text((widget.AMF_econ[0]/widget.area).toStringAsFixed(2))),
+              DataCell(Text( ((widget.AMF_econ[0]/widget.area)/50).toStringAsFixed(2)  )),
+              DataCell(Text( (((widget.AMF_econ[0]/widget.area)/50)*widget.nCost[3]).toStringAsFixed(2) )),
+            ]),
+            DataRow(cells: [
+              DataCell(
+                Container(
+                    width:MediaQuery.of(context).size.width/10,
+                    child: Text(capitalize(widget.caseCH[1]))
+                ),
+              ),
+              DataCell(Text((widget.AMF_econ[1]/widget.area).toStringAsFixed(2))),
+              DataCell(Text(((widget.AMF_econ[1]/widget.area)/50).toStringAsFixed(2))),
+              DataCell(Text( (((widget.AMF_econ[1]/widget.area)/50)*widget.pCost[3]).toStringAsFixed(2) )),
+            ]),
+            DataRow(cells: [
+              DataCell(
+                Container(
+                    width:MediaQuery.of(context).size.width/10,
+                    child: Text(capitalize(widget.caseCH[2]))
+                ),
+              ),
+              DataCell(Text((widget.AMF_econ[2]/widget.area).toStringAsFixed(2))),
+              DataCell(Text(((widget.AMF_econ[2]/widget.area)/50).toStringAsFixed(2))),
+              DataCell(Text( (((widget.AMF_econ[2]/widget.area)/50)*widget.kCost[3]).toStringAsFixed(2) )),
+            ]),
+            DataRow(cells: [
+              DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(Text('')),
+              DataCell(Text('')),
+              DataCell(
+                  Text(
+                      (
+                          (widget.AMF_econ[0]/50)*widget.nCost[3]+
+                              (widget.AMF_econ[1]/50)*widget.pCost[3]+
+                              (widget.AMF_econ[2]/50)*widget.kCost[3]
+                      ).toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold)
+                  )
+              ),
+            ]),
+          ],
+        ),
+        SizedBox(height:20),
+        Center(
+            child: Text(
+              'Amount of Fertilizer',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            )),
+        Center(
+            child: Text(
+              "farmer's area",
+              style: TextStyle(fontSize: 15),
+            )),
+        DataTable(
+          columns: [
+            DataColumn(label: Text('')),
+            DataColumn(label: Text('kg')),
+            DataColumn(label: Text('Bag')),
+            DataColumn(label: Text('Cost\n(PHP)',overflow: TextOverflow.ellipsis,)),
+          ],
+          rows: [
+            DataRow(cells: [
+              DataCell(
+                Container(
+                    width:MediaQuery.of(context).size.width/10,
+                    child: Text(capitalize(widget.caseCH[0]))
+                ),
+              ),
               DataCell(Text(widget.AMF_econ[0].toStringAsFixed(2))),
               DataCell(Text( (widget.AMF_econ[0]/50).toStringAsFixed(2)  )),
+              DataCell(Text( ((widget.AMF_econ[0]/50)*widget.nCost[3]).toStringAsFixed(2) )),
             ]),
             DataRow(cells: [
-              DataCell(Text(capitalize(widget.caseCH[1]))),
+              DataCell(
+                Container(
+                  width:MediaQuery.of(context).size.width/10,
+                  child: Text(capitalize(widget.caseCH[1]))
+                ),
+              ),
               DataCell(Text(widget.AMF_econ[1].toStringAsFixed(2))),
               DataCell(Text((widget.AMF_econ[1]/50).toStringAsFixed(2))),
+              DataCell(Text( ((widget.AMF_econ[1]/50)*widget.pCost[3]).toStringAsFixed(2) )),
             ]),
             DataRow(cells: [
-              DataCell(Text(capitalize(widget.caseCH[2]))),
+              DataCell(
+                Container(
+                    width:MediaQuery.of(context).size.width/10,
+                    child: Text(capitalize(widget.caseCH[2]))
+                ),
+              ),
               DataCell(Text(widget.AMF_econ[2].toStringAsFixed(2))),
               DataCell(Text((widget.AMF_econ[2]/50).toStringAsFixed(2))),
+              DataCell(Text( ((widget.AMF_econ[2]/50)*widget.kCost[3]).toStringAsFixed(2) )),
+            ]),
+            DataRow(cells: [
+              DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataCell(Text('')),
+              DataCell(Text('')),
+              DataCell(
+                  Text(
+                      (
+                          (widget.AMF_econ[0]/50)*widget.nCost[3]+
+                              (widget.AMF_econ[1]/50)*widget.pCost[3]+
+                              (widget.AMF_econ[2]/50)*widget.kCost[3]
+                      ).toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold)
+                  )
+              ),
             ]),
           ],
         ),
@@ -1322,20 +1430,24 @@ class _resultsPageState extends State<resultsPage> {
               )),
           DataTable(
             columns: [
-              DataColumn(label: Text('Nutrient')),
-              DataColumn(label: Text('Cost (PHP)')),
+              DataColumn(label: Text('nutrient')),
+              DataColumn(label: Text('per hectare',overflow: TextOverflow.ellipsis,)),
+              DataColumn(label: Text("farmer's area",overflow: TextOverflow.ellipsis,)),
             ],
             rows: [
               DataRow(cells: [
                 DataCell(Text('N')),
+                DataCell(Text(formatter.format(widget.nCost[0]/widget.area))),
                 DataCell(Text(formatter.format(widget.nCost[0]))),
               ]),
               DataRow(cells: [
                 DataCell(Text('P₂O₅')),
+                DataCell(Text(formatter.format(widget.pCost[0]/widget.area))),
                 DataCell(Text(formatter.format(widget.pCost[0]))),
               ]),
               DataRow(cells: [
                 DataCell(Text('K₂O')),
+                DataCell(Text(formatter.format(widget.kCost[0]/widget.area))),
                 DataCell(Text(formatter.format(widget.kCost[0]))),
               ]),
             ],
@@ -1350,12 +1462,20 @@ class _resultsPageState extends State<resultsPage> {
                 )),
             DataTable(
               columns: [
+                DataColumn(label: Text('')),
                 DataColumn(label: Text('N')),
                 DataColumn(label: Text('P₂O₅')),
                 DataColumn(label: Text('K₂O')),
               ],
               rows: [
                 DataRow(cells: [
+                  DataCell(Text("per hectare")),
+                  DataCell(Text( (widget.frr_target[0]/widget.area).toStringAsFixed(2))),
+                  DataCell(Text( (widget.frr_target[1]/widget.area).toStringAsFixed(2))),
+                  DataCell(Text( (widget.frr_target[2]/widget.area).toStringAsFixed(2))),
+                ]),
+                DataRow(cells: [
+                  DataCell(Text("farmer's area")),
                   DataCell(Text(widget.frr_target[0].toStringAsFixed(2))),
                   DataCell(Text(widget.frr_target[1].toStringAsFixed(2))),
                   DataCell(Text(widget.frr_target[2].toStringAsFixed(2))),
@@ -1363,35 +1483,141 @@ class _resultsPageState extends State<resultsPage> {
               ],
             ),
               SizedBox(height:20),
-              Center(
-                  child: Text(
-                    'Amount of Fertilizer',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  )),
-              DataTable(
-                columns: [
-                  DataColumn(label: Text('')),
-                  DataColumn(label: Text('kg')),
-                  DataColumn(label: Text('Bag')),
-                ],
-                rows: [
-                  DataRow(cells: [
-                    DataCell(Text(capitalize(widget.caseCH[0]))),
-                    DataCell(Text(widget.AMF[0].toStringAsFixed(2))),
-                    DataCell(Text( (widget.AMF[0]/50).toStringAsFixed(2)  )),
-                  ]),
-                  DataRow(cells: [
-                    DataCell(Text(capitalize(widget.caseCH[1]))),
-                    DataCell(Text(widget.AMF[1].toStringAsFixed(2))),
-                    DataCell(Text((widget.AMF[1]/50).toStringAsFixed(2))),
-                  ]),
-                  DataRow(cells: [
-                    DataCell(Text(capitalize(widget.caseCH[2]))),
-                    DataCell(Text(widget.AMF[2].toStringAsFixed(2))),
-                    DataCell(Text((widget.AMF[2]/50).toStringAsFixed(2))),
-                  ]),
-                ],
-              ),
+            Center(
+                child: Text(
+                  'Amount of Fertilizer',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                )),
+            Center(
+                child: Text(
+                  "per hectare",
+                  style: TextStyle(fontSize: 15),
+                )),
+            DataTable(
+              columns: [
+                DataColumn(label: Text('')),
+                DataColumn(label: Text('kg')),
+                DataColumn(label: Text('Bag')),
+                DataColumn(label: Text('Cost\n(PHP)',overflow: TextOverflow.ellipsis,)),
+              ],
+              rows: [
+                DataRow(cells: [
+                  DataCell(
+                    Container(
+                        width:MediaQuery.of(context).size.width/10,
+                        child: Text(capitalize(widget.caseCH[0]))
+                    ),
+                  ),
+                  DataCell(Text((widget.AMF[0]/widget.area).toStringAsFixed(2))),
+                  DataCell(Text( ((widget.AMF[0]/widget.area)/50).toStringAsFixed(2)  )),
+                  DataCell(Text( (((widget.AMF[0]/widget.area)/50)*widget.nCost[3]).toStringAsFixed(2) )),
+                ]),
+                DataRow(cells: [
+                  DataCell(
+                    Container(
+                        width:MediaQuery.of(context).size.width/10,
+                        child: Text(capitalize(widget.caseCH[1]))
+                    ),
+                  ),
+                  DataCell(Text((widget.AMF[1]/widget.area).toStringAsFixed(2))),
+                  DataCell(Text(((widget.AMF[1]/widget.area)/50).toStringAsFixed(2))),
+                  DataCell(Text( (((widget.AMF[1]/widget.area)/50)*widget.pCost[3]).toStringAsFixed(2) )),
+                ]),
+                DataRow(cells: [
+                  DataCell(
+                    Container(
+                        width:MediaQuery.of(context).size.width/10,
+                        child: Text(capitalize(widget.caseCH[2]))
+                    ),
+                  ),
+                  DataCell(Text((widget.AMF[2]/widget.area).toStringAsFixed(2))),
+                  DataCell(Text(((widget.AMF[2]/widget.area)/50).toStringAsFixed(2))),
+                  DataCell(Text( (((widget.AMF[2]/widget.area)/50)*widget.kCost[3]).toStringAsFixed(2) )),
+                ]),
+                DataRow(cells: [
+                  DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
+                  DataCell(Text('')),
+                  DataCell(Text('')),
+                  DataCell(
+                      Text(
+                          (
+                              (widget.AMF[0]/50)*widget.nCost[3]+
+                                  (widget.AMF[1]/50)*widget.pCost[3]+
+                                  (widget.AMF[2]/50)*widget.kCost[3]
+                          ).toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold)
+                      )
+                  ),
+                ]),
+              ],
+            ),
+            SizedBox(height:20),
+            Center(
+                child: Text(
+                  'Amount of Fertilizer',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                )),
+            Center(
+                child: Text(
+                  "farmer's area",
+                  style: TextStyle(fontSize: 15),
+                )),
+            DataTable(
+              columns: [
+                DataColumn(label: Text('')),
+                DataColumn(label: Text('kg')),
+                DataColumn(label: Text('Bag')),
+                DataColumn(label: Text('Cost\n(PHP)',overflow: TextOverflow.ellipsis,)),
+              ],
+              rows: [
+                DataRow(cells: [
+                  DataCell(
+                    Container(
+                        width:MediaQuery.of(context).size.width/10,
+                        child: Text(capitalize(widget.caseCH[0]))
+                    ),
+                  ),
+                  DataCell(Text(widget.AMF[0].toStringAsFixed(2))),
+                  DataCell(Text( (widget.AMF[0]/50).toStringAsFixed(2)  )),
+                  DataCell(Text( ((widget.AMF[0]/50)*widget.nCost[3]).toStringAsFixed(2) )),
+                ]),
+                DataRow(cells: [
+                  DataCell(
+                    Container(
+                        width:MediaQuery.of(context).size.width/10,
+                        child: Text(capitalize(widget.caseCH[1]))
+                    ),
+                  ),
+                  DataCell(Text(widget.AMF[1].toStringAsFixed(2))),
+                  DataCell(Text((widget.AMF[1]/50).toStringAsFixed(2))),
+                  DataCell(Text( ((widget.AMF[1]/50)*widget.pCost[3]).toStringAsFixed(2) )),
+                ]),
+                DataRow(cells: [
+                  DataCell(
+                    Container(
+                        width:MediaQuery.of(context).size.width/10,
+                        child: Text(capitalize(widget.caseCH[2]))
+                    ),
+                  ),
+                  DataCell(Text(widget.AMF[2].toStringAsFixed(2))),
+                  DataCell(Text((widget.AMF[2]/50).toStringAsFixed(2))),
+                  DataCell(Text( ((widget.AMF[2]/50)*widget.kCost[3]).toStringAsFixed(2) )),
+                ]),
+                DataRow(cells: [
+                  DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
+                  DataCell(Text('')),
+                  DataCell(Text('')),
+                  DataCell(
+                      Text(
+                          (
+                              (widget.AMF[0]/50)*widget.nCost[3]+
+                                  (widget.AMF[1]/50)*widget.pCost[3]+
+                                  (widget.AMF[2]/50)*widget.kCost[3]
+                          ).toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold)
+                      )
+                  ),
+                ]),
+              ],
+            ),
             SizedBox(height:20),
             Center(
                 child: Text(
@@ -1400,21 +1626,25 @@ class _resultsPageState extends State<resultsPage> {
                 )),
             DataTable(
               columns: [
-                DataColumn(label: Text('Nutrient')),
-                DataColumn(label: Text('Cost (PHP)'))
+                DataColumn(label: Text('nutrient')),
+                DataColumn(label: Text('per hectare',overflow: TextOverflow.ellipsis,)),
+                DataColumn(label: Text("farmer's area",overflow: TextOverflow.ellipsis,)),
               ],
               rows: [
                 DataRow(cells: [
                   DataCell(Text('N')),
-                  DataCell(Text(widget.nCost[1].toStringAsFixed(2))),
+                  DataCell(Text(formatter.format(widget.nCost[1]/widget.area))),
+                  DataCell(Text(formatter.format(widget.nCost[1]))),
                 ]),
                 DataRow(cells: [
                   DataCell(Text('P₂O₅')),
-                  DataCell(Text(widget.pCost[1].toStringAsFixed(2))),
+                  DataCell(Text(formatter.format(widget.pCost[1]/widget.area))),
+                  DataCell(Text(formatter.format(widget.pCost[1]))),
                 ]),
                 DataRow(cells: [
                   DataCell(Text('K₂O')),
-                  DataCell(Text(widget.kCost[1].toStringAsFixed(2))),
+                  DataCell(Text(formatter.format(widget.kCost[1]/widget.area))),
+                  DataCell(Text(formatter.format(widget.kCost[1]))),
                 ]),
               ],
             ),
