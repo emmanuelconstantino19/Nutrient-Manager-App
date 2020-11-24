@@ -1265,6 +1265,7 @@ class _resultsPageState extends State<resultsPage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             )),
         DataTable(
+          columnSpacing: 25,
           columns: [
             DataColumn(label: Text('')),
             DataColumn(label: Text('N')),
@@ -1298,6 +1299,7 @@ class _resultsPageState extends State<resultsPage> {
               style: TextStyle(fontSize: 15),
             )),
         DataTable(
+          columnSpacing: 25,
           columns: [
             DataColumn(label: Text('')),
             DataColumn(label: Text('kg')),
@@ -1306,34 +1308,19 @@ class _resultsPageState extends State<resultsPage> {
           ],
           rows: [
             DataRow(cells: [
-              DataCell(
-                Container(
-                    width:MediaQuery.of(context).size.width/10,
-                    child: Text(capitalize(widget.caseCH[0]))
-                ),
-              ),
+              DataCell(Text(capitalize(widget.caseCH[0]))),
               DataCell(Text((widget.AMF_econ[0]/widget.area).toStringAsFixed(2))),
               DataCell(Text( ((widget.AMF_econ[0]/widget.area)/50).toStringAsFixed(2)  )),
               DataCell(Text( (((widget.AMF_econ[0]/widget.area)/50)*widget.nCost[3]).toStringAsFixed(2) )),
             ]),
             DataRow(cells: [
-              DataCell(
-                Container(
-                    width:MediaQuery.of(context).size.width/10,
-                    child: Text(capitalize(widget.caseCH[1]))
-                ),
-              ),
+              DataCell(Text(capitalize(widget.caseCH[1]))),
               DataCell(Text((widget.AMF_econ[1]/widget.area).toStringAsFixed(2))),
               DataCell(Text(((widget.AMF_econ[1]/widget.area)/50).toStringAsFixed(2))),
               DataCell(Text( (((widget.AMF_econ[1]/widget.area)/50)*widget.pCost[3]).toStringAsFixed(2) )),
             ]),
             DataRow(cells: [
-              DataCell(
-                Container(
-                    width:MediaQuery.of(context).size.width/10,
-                    child: Text(capitalize(widget.caseCH[2]))
-                ),
-              ),
+              DataCell(Text(capitalize(widget.caseCH[2]))),
               DataCell(Text((widget.AMF_econ[2]/widget.area).toStringAsFixed(2))),
               DataCell(Text(((widget.AMF_econ[2]/widget.area)/50).toStringAsFixed(2))),
               DataCell(Text( (((widget.AMF_econ[2]/widget.area)/50)*widget.kCost[3]).toStringAsFixed(2) )),
@@ -1345,9 +1332,9 @@ class _resultsPageState extends State<resultsPage> {
               DataCell(
                   Text(
                       (
-                          (widget.AMF_econ[0]/50)*widget.nCost[3]+
-                              (widget.AMF_econ[1]/50)*widget.pCost[3]+
-                              (widget.AMF_econ[2]/50)*widget.kCost[3]
+                          (((widget.AMF_econ[0]/widget.area)/50)*widget.nCost[3]) +
+                              (((widget.AMF_econ[1]/widget.area)/50)*widget.pCost[3])+
+                              (((widget.AMF_econ[2]/widget.area)/50)*widget.kCost[3])
                       ).toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold)
                   )
               ),
@@ -1366,6 +1353,7 @@ class _resultsPageState extends State<resultsPage> {
               style: TextStyle(fontSize: 15),
             )),
         DataTable(
+          columnSpacing: 25,
           columns: [
             DataColumn(label: Text('')),
             DataColumn(label: Text('kg')),
@@ -1374,34 +1362,19 @@ class _resultsPageState extends State<resultsPage> {
           ],
           rows: [
             DataRow(cells: [
-              DataCell(
-                Container(
-                    width:MediaQuery.of(context).size.width/10,
-                    child: Text(capitalize(widget.caseCH[0]))
-                ),
-              ),
+              DataCell(Text(capitalize(widget.caseCH[0]))),
               DataCell(Text(widget.AMF_econ[0].toStringAsFixed(2))),
               DataCell(Text( (widget.AMF_econ[0]/50).toStringAsFixed(2)  )),
               DataCell(Text( ((widget.AMF_econ[0]/50)*widget.nCost[3]).toStringAsFixed(2) )),
             ]),
             DataRow(cells: [
-              DataCell(
-                Container(
-                  width:MediaQuery.of(context).size.width/10,
-                  child: Text(capitalize(widget.caseCH[1]))
-                ),
-              ),
+              DataCell(Text(capitalize(widget.caseCH[1]))),
               DataCell(Text(widget.AMF_econ[1].toStringAsFixed(2))),
               DataCell(Text((widget.AMF_econ[1]/50).toStringAsFixed(2))),
               DataCell(Text( ((widget.AMF_econ[1]/50)*widget.pCost[3]).toStringAsFixed(2) )),
             ]),
             DataRow(cells: [
-              DataCell(
-                Container(
-                    width:MediaQuery.of(context).size.width/10,
-                    child: Text(capitalize(widget.caseCH[2]))
-                ),
-              ),
+              DataCell(Text(capitalize(widget.caseCH[2]))),
               DataCell(Text(widget.AMF_econ[2].toStringAsFixed(2))),
               DataCell(Text((widget.AMF_econ[2]/50).toStringAsFixed(2))),
               DataCell(Text( ((widget.AMF_econ[2]/50)*widget.kCost[3]).toStringAsFixed(2) )),
@@ -1461,6 +1434,7 @@ class _resultsPageState extends State<resultsPage> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 )),
             DataTable(
+              columnSpacing: 25,
               columns: [
                 DataColumn(label: Text('')),
                 DataColumn(label: Text('N')),
@@ -1494,6 +1468,7 @@ class _resultsPageState extends State<resultsPage> {
                   style: TextStyle(fontSize: 15),
                 )),
             DataTable(
+              columnSpacing: 25,
               columns: [
                 DataColumn(label: Text('')),
                 DataColumn(label: Text('kg')),
@@ -1502,34 +1477,19 @@ class _resultsPageState extends State<resultsPage> {
               ],
               rows: [
                 DataRow(cells: [
-                  DataCell(
-                    Container(
-                        width:MediaQuery.of(context).size.width/10,
-                        child: Text(capitalize(widget.caseCH[0]))
-                    ),
-                  ),
+                  DataCell(Text(capitalize(widget.caseCH[0]))),
                   DataCell(Text((widget.AMF[0]/widget.area).toStringAsFixed(2))),
                   DataCell(Text( ((widget.AMF[0]/widget.area)/50).toStringAsFixed(2)  )),
                   DataCell(Text( (((widget.AMF[0]/widget.area)/50)*widget.nCost[3]).toStringAsFixed(2) )),
                 ]),
                 DataRow(cells: [
-                  DataCell(
-                    Container(
-                        width:MediaQuery.of(context).size.width/10,
-                        child: Text(capitalize(widget.caseCH[1]))
-                    ),
-                  ),
+                  DataCell(Text(capitalize(widget.caseCH[1]))),
                   DataCell(Text((widget.AMF[1]/widget.area).toStringAsFixed(2))),
                   DataCell(Text(((widget.AMF[1]/widget.area)/50).toStringAsFixed(2))),
                   DataCell(Text( (((widget.AMF[1]/widget.area)/50)*widget.pCost[3]).toStringAsFixed(2) )),
                 ]),
                 DataRow(cells: [
-                  DataCell(
-                    Container(
-                        width:MediaQuery.of(context).size.width/10,
-                        child: Text(capitalize(widget.caseCH[2]))
-                    ),
-                  ),
+                  DataCell(Text(capitalize(widget.caseCH[2]))),
                   DataCell(Text((widget.AMF[2]/widget.area).toStringAsFixed(2))),
                   DataCell(Text(((widget.AMF[2]/widget.area)/50).toStringAsFixed(2))),
                   DataCell(Text( (((widget.AMF[2]/widget.area)/50)*widget.kCost[3]).toStringAsFixed(2) )),
@@ -1541,9 +1501,9 @@ class _resultsPageState extends State<resultsPage> {
                   DataCell(
                       Text(
                           (
-                              (widget.AMF[0]/50)*widget.nCost[3]+
-                                  (widget.AMF[1]/50)*widget.pCost[3]+
-                                  (widget.AMF[2]/50)*widget.kCost[3]
+                              (((widget.AMF[0]/widget.area)/50)*widget.nCost[3]) +
+                                  (((widget.AMF[1]/widget.area)/50)*widget.pCost[3])+
+                                  (((widget.AMF[2]/widget.area)/50)*widget.kCost[3])
                           ).toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold)
                       )
                   ),
@@ -1562,6 +1522,7 @@ class _resultsPageState extends State<resultsPage> {
                   style: TextStyle(fontSize: 15),
                 )),
             DataTable(
+              columnSpacing: 25,
               columns: [
                 DataColumn(label: Text('')),
                 DataColumn(label: Text('kg')),
@@ -1570,34 +1531,19 @@ class _resultsPageState extends State<resultsPage> {
               ],
               rows: [
                 DataRow(cells: [
-                  DataCell(
-                    Container(
-                        width:MediaQuery.of(context).size.width/10,
-                        child: Text(capitalize(widget.caseCH[0]))
-                    ),
-                  ),
+                  DataCell(Text(capitalize(widget.caseCH[0]))),
                   DataCell(Text(widget.AMF[0].toStringAsFixed(2))),
                   DataCell(Text( (widget.AMF[0]/50).toStringAsFixed(2)  )),
                   DataCell(Text( ((widget.AMF[0]/50)*widget.nCost[3]).toStringAsFixed(2) )),
                 ]),
                 DataRow(cells: [
-                  DataCell(
-                    Container(
-                        width:MediaQuery.of(context).size.width/10,
-                        child: Text(capitalize(widget.caseCH[1]))
-                    ),
-                  ),
+                  DataCell(Text(capitalize(widget.caseCH[1]))),
                   DataCell(Text(widget.AMF[1].toStringAsFixed(2))),
                   DataCell(Text((widget.AMF[1]/50).toStringAsFixed(2))),
                   DataCell(Text( ((widget.AMF[1]/50)*widget.pCost[3]).toStringAsFixed(2) )),
                 ]),
                 DataRow(cells: [
-                  DataCell(
-                    Container(
-                        width:MediaQuery.of(context).size.width/10,
-                        child: Text(capitalize(widget.caseCH[2]))
-                    ),
-                  ),
+                  DataCell(Text(capitalize(widget.caseCH[2]))),
                   DataCell(Text(widget.AMF[2].toStringAsFixed(2))),
                   DataCell(Text((widget.AMF[2]/50).toStringAsFixed(2))),
                   DataCell(Text( ((widget.AMF[2]/50)*widget.kCost[3]).toStringAsFixed(2) )),
