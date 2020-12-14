@@ -870,35 +870,6 @@ class _SecondPageState extends State<SecondPage> {
           padding: EdgeInsets.all(20),
           child: Column(
             children: [
-//              Center(
-//                  child: Text(
-//                    'Amount of fertilizer',
-//                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-//                  )),
-//              DataTable(
-//                columns: [
-//                  DataColumn(label: Text('')),
-//                  DataColumn(label: Text('kg')),
-//                  DataColumn(label: Text('Bag')),
-//                ],
-//                rows: [
-//                  DataRow(cells: [
-//                    DataCell(Text(capitalize(widget.caseCH[0]))),
-//                    DataCell(Text(widget.AMF[0].toStringAsFixed(2))),
-//                    DataCell(Text( (widget.AMF[0]/50).toStringAsFixed(2)  )),
-//                  ]),
-//                  DataRow(cells: [
-//                    DataCell(Text(capitalize(widget.caseCH[1]))),
-//                    DataCell(Text(widget.AMF[1].toStringAsFixed(2))),
-//                    DataCell(Text((widget.AMF[1]/50).toStringAsFixed(2))),
-//                  ]),
-//                  DataRow(cells: [
-//                    DataCell(Text(capitalize(widget.caseCH[2]))),
-//                    DataCell(Text(widget.AMF[2].toStringAsFixed(2))),
-//                    DataCell(Text((widget.AMF[2]/50).toStringAsFixed(2))),
-//                  ]),
-//                ],
-//              ),
               Expanded(
                 child: SingleChildScrollView(
                   child: Form(
@@ -1241,7 +1212,7 @@ class _resultsPageState extends State<resultsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Results"),
+        title: Text("SSNM Rates"),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
@@ -1308,22 +1279,22 @@ class _resultsPageState extends State<resultsPage> {
           ],
           rows: [
             DataRow(cells: [
-              DataCell(Text(capitalize(widget.caseCH[0]))),
-              DataCell(Text((widget.AMF_econ[0]/widget.area).toStringAsFixed(2))),
-              DataCell(Text( ((widget.AMF_econ[0]/widget.area)/50).toStringAsFixed(2)  )),
-              DataCell(Text( (((widget.AMF_econ[0]/widget.area)/50)*widget.nCost[3]).toStringAsFixed(2) )),
+              DataCell(Text(capitalize((widget.caseCH[0]=='muriateOfPotash') ? "muriate of potash" : widget.caseCH[0]))),
+              DataCell(Text( formatter.format((widget.AMF_econ[0]/widget.area)) )),
+              DataCell(Text( formatter.format(((widget.AMF_econ[0]/widget.area)/50))  )),
+              DataCell(Text( formatter.format((((widget.AMF_econ[0]/widget.area)/50)*widget.nCost[3])) )),
             ]),
             DataRow(cells: [
               DataCell(Text(capitalize(widget.caseCH[1]))),
-              DataCell(Text((widget.AMF_econ[1]/widget.area).toStringAsFixed(2))),
-              DataCell(Text(((widget.AMF_econ[1]/widget.area)/50).toStringAsFixed(2))),
-              DataCell(Text( (((widget.AMF_econ[1]/widget.area)/50)*widget.pCost[3]).toStringAsFixed(2) )),
+              DataCell(Text( formatter.format((widget.AMF_econ[1]/widget.area)) )),
+              DataCell(Text( formatter.format(((widget.AMF_econ[1]/widget.area)/50)) )),
+              DataCell(Text( formatter.format((((widget.AMF_econ[1]/widget.area)/50)*widget.pCost[3])) )),
             ]),
             DataRow(cells: [
               DataCell(Text(capitalize(widget.caseCH[2]))),
-              DataCell(Text((widget.AMF_econ[2]/widget.area).toStringAsFixed(2))),
-              DataCell(Text(((widget.AMF_econ[2]/widget.area)/50).toStringAsFixed(2))),
-              DataCell(Text( (((widget.AMF_econ[2]/widget.area)/50)*widget.kCost[3]).toStringAsFixed(2) )),
+              DataCell(Text( formatter.format((widget.AMF_econ[2]/widget.area)) )),
+              DataCell(Text( formatter.format(((widget.AMF_econ[2]/widget.area)/50)) )),
+              DataCell(Text( formatter.format((((widget.AMF_econ[2]/widget.area)/50)*widget.kCost[3])) )),
             ]),
             DataRow(cells: [
               DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
@@ -1331,11 +1302,12 @@ class _resultsPageState extends State<resultsPage> {
               DataCell(Text('')),
               DataCell(
                   Text(
-                      (
+                      formatter.format(
                           (((widget.AMF_econ[0]/widget.area)/50)*widget.nCost[3]) +
                               (((widget.AMF_econ[1]/widget.area)/50)*widget.pCost[3])+
                               (((widget.AMF_econ[2]/widget.area)/50)*widget.kCost[3])
-                      ).toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold)
+
+                      ), style: TextStyle(fontWeight: FontWeight.bold)
                   )
               ),
             ]),
@@ -1362,22 +1334,22 @@ class _resultsPageState extends State<resultsPage> {
           ],
           rows: [
             DataRow(cells: [
-              DataCell(Text(capitalize(widget.caseCH[0]))),
-              DataCell(Text(widget.AMF_econ[0].toStringAsFixed(2))),
-              DataCell(Text( (widget.AMF_econ[0]/50).toStringAsFixed(2)  )),
-              DataCell(Text( ((widget.AMF_econ[0]/50)*widget.nCost[3]).toStringAsFixed(2) )),
+              DataCell(Text(capitalize((widget.caseCH[0]=='muriateOfPotash') ? "muriate of potash" : widget.caseCH[0]))),
+              DataCell(Text( formatter.format(widget.AMF_econ[0]) )),
+              DataCell(Text( formatter.format((widget.AMF_econ[0]/50)) )),
+              DataCell(Text( formatter.format(((widget.AMF_econ[0]/50)*widget.nCost[3])) )),
             ]),
             DataRow(cells: [
               DataCell(Text(capitalize(widget.caseCH[1]))),
-              DataCell(Text(widget.AMF_econ[1].toStringAsFixed(2))),
-              DataCell(Text((widget.AMF_econ[1]/50).toStringAsFixed(2))),
-              DataCell(Text( ((widget.AMF_econ[1]/50)*widget.pCost[3]).toStringAsFixed(2) )),
+              DataCell(Text( formatter.format(widget.AMF_econ[1]) )),
+              DataCell(Text( formatter.format((widget.AMF_econ[1]/50)) )),
+              DataCell(Text( formatter.format(((widget.AMF_econ[1]/50)*widget.pCost[3])) )),
             ]),
             DataRow(cells: [
               DataCell(Text(capitalize(widget.caseCH[2]))),
-              DataCell(Text(widget.AMF_econ[2].toStringAsFixed(2))),
-              DataCell(Text((widget.AMF_econ[2]/50).toStringAsFixed(2))),
-              DataCell(Text( ((widget.AMF_econ[2]/50)*widget.kCost[3]).toStringAsFixed(2) )),
+              DataCell(Text( formatter.format(widget.AMF_econ[2]) )),
+              DataCell(Text( formatter.format((widget.AMF_econ[2]/50)) )),
+              DataCell(Text( formatter.format(((widget.AMF_econ[2]/50)*widget.kCost[3])) )),
             ]),
             DataRow(cells: [
               DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
@@ -1385,11 +1357,11 @@ class _resultsPageState extends State<resultsPage> {
               DataCell(Text('')),
               DataCell(
                   Text(
-                      (
+                      formatter.format(
                           (widget.AMF_econ[0]/50)*widget.nCost[3]+
                               (widget.AMF_econ[1]/50)*widget.pCost[3]+
                               (widget.AMF_econ[2]/50)*widget.kCost[3]
-                      ).toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold)
+                      ), style: TextStyle(fontWeight: FontWeight.bold)
                   )
               ),
             ]),
@@ -1477,22 +1449,22 @@ class _resultsPageState extends State<resultsPage> {
               ],
               rows: [
                 DataRow(cells: [
-                  DataCell(Text(capitalize(widget.caseCH[0]))),
-                  DataCell(Text((widget.AMF[0]/widget.area).toStringAsFixed(2))),
-                  DataCell(Text( ((widget.AMF[0]/widget.area)/50).toStringAsFixed(2)  )),
-                  DataCell(Text( (((widget.AMF[0]/widget.area)/50)*widget.nCost[3]).toStringAsFixed(2) )),
+                  DataCell(Text(capitalize((widget.caseCH[0]=='muriateOfPotash') ? "muriate of potash" : widget.caseCH[0]))),
+                  DataCell(Text( formatter.format((widget.AMF[0]/widget.area)) )),
+                  DataCell(Text( formatter.format(((widget.AMF[0]/widget.area)/50)) )),
+                  DataCell(Text( formatter.format((((widget.AMF[0]/widget.area)/50)*widget.nCost[3])) )),
                 ]),
                 DataRow(cells: [
                   DataCell(Text(capitalize(widget.caseCH[1]))),
-                  DataCell(Text((widget.AMF[1]/widget.area).toStringAsFixed(2))),
-                  DataCell(Text(((widget.AMF[1]/widget.area)/50).toStringAsFixed(2))),
-                  DataCell(Text( (((widget.AMF[1]/widget.area)/50)*widget.pCost[3]).toStringAsFixed(2) )),
+                  DataCell(Text( formatter.format((widget.AMF[1]/widget.area)) )),
+                  DataCell(Text( formatter.format(((widget.AMF[1]/widget.area)/50)) )),
+                  DataCell(Text( formatter.format((((widget.AMF[1]/widget.area)/50)*widget.pCost[3])) )),
                 ]),
                 DataRow(cells: [
                   DataCell(Text(capitalize(widget.caseCH[2]))),
-                  DataCell(Text((widget.AMF[2]/widget.area).toStringAsFixed(2))),
-                  DataCell(Text(((widget.AMF[2]/widget.area)/50).toStringAsFixed(2))),
-                  DataCell(Text( (((widget.AMF[2]/widget.area)/50)*widget.kCost[3]).toStringAsFixed(2) )),
+                  DataCell(Text( formatter.format((widget.AMF[2]/widget.area)) )),
+                  DataCell(Text( formatter.format(((widget.AMF[2]/widget.area)/50)) )),
+                  DataCell(Text( formatter.format((((widget.AMF[2]/widget.area)/50)*widget.kCost[3])) )),
                 ]),
                 DataRow(cells: [
                   DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
@@ -1500,11 +1472,11 @@ class _resultsPageState extends State<resultsPage> {
                   DataCell(Text('')),
                   DataCell(
                       Text(
-                          (
+                          formatter.format(
                               (((widget.AMF[0]/widget.area)/50)*widget.nCost[3]) +
                                   (((widget.AMF[1]/widget.area)/50)*widget.pCost[3])+
                                   (((widget.AMF[2]/widget.area)/50)*widget.kCost[3])
-                          ).toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold)
+                          ), style: TextStyle(fontWeight: FontWeight.bold)
                       )
                   ),
                 ]),
@@ -1531,22 +1503,22 @@ class _resultsPageState extends State<resultsPage> {
               ],
               rows: [
                 DataRow(cells: [
-                  DataCell(Text(capitalize(widget.caseCH[0]))),
-                  DataCell(Text(widget.AMF[0].toStringAsFixed(2))),
-                  DataCell(Text( (widget.AMF[0]/50).toStringAsFixed(2)  )),
-                  DataCell(Text( ((widget.AMF[0]/50)*widget.nCost[3]).toStringAsFixed(2) )),
+                  DataCell(Text(capitalize((widget.caseCH[0]=='muriateOfPotash') ? "muriate of potash" : widget.caseCH[0]))),
+                  DataCell(Text( formatter.format(widget.AMF[0]) )),
+                  DataCell(Text( formatter.format((widget.AMF[0]/50)) )),
+                  DataCell(Text( formatter.format(((widget.AMF[0]/50)*widget.nCost[3])) )),
                 ]),
                 DataRow(cells: [
                   DataCell(Text(capitalize(widget.caseCH[1]))),
-                  DataCell(Text(widget.AMF[1].toStringAsFixed(2))),
-                  DataCell(Text((widget.AMF[1]/50).toStringAsFixed(2))),
-                  DataCell(Text( ((widget.AMF[1]/50)*widget.pCost[3]).toStringAsFixed(2) )),
+                  DataCell(Text( formatter.format(widget.AMF[1]) )),
+                  DataCell(Text( formatter.format((widget.AMF[1]/50)) )),
+                  DataCell(Text( formatter.format(((widget.AMF[1]/50)*widget.pCost[3])) )),
                 ]),
                 DataRow(cells: [
                   DataCell(Text(capitalize(widget.caseCH[2]))),
-                  DataCell(Text(widget.AMF[2].toStringAsFixed(2))),
-                  DataCell(Text((widget.AMF[2]/50).toStringAsFixed(2))),
-                  DataCell(Text( ((widget.AMF[2]/50)*widget.kCost[3]).toStringAsFixed(2) )),
+                  DataCell(Text( formatter.format(widget.AMF[2]) )),
+                  DataCell(Text( formatter.format((widget.AMF[2]/50)) )),
+                  DataCell(Text( formatter.format(((widget.AMF[2]/50)*widget.kCost[3])) )),
                 ]),
                 DataRow(cells: [
                   DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
@@ -1554,11 +1526,11 @@ class _resultsPageState extends State<resultsPage> {
                   DataCell(Text('')),
                   DataCell(
                       Text(
-                          (
+                          formatter.format(
                               (widget.AMF[0]/50)*widget.nCost[3]+
                                   (widget.AMF[1]/50)*widget.pCost[3]+
                                   (widget.AMF[2]/50)*widget.kCost[3]
-                          ).toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold)
+                          ), style: TextStyle(fontWeight: FontWeight.bold)
                       )
                   ),
                 ]),
