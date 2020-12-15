@@ -213,12 +213,87 @@ class MyApp extends StatelessWidget {
         buttonTheme: ButtonThemeData(
           buttonColor: Colors.green,     //  <-- dark color
           textTheme: ButtonTextTheme.primary, //  <-- this auto selects the right color
-        )
+        ),
       ),
-      home: MyHomePage(title: 'Nutrient Manager App'),
+      home: FrontPage(),
     );
   }
 }
+
+class FrontPage extends StatefulWidget {
+  @override
+  _FrontPageState createState() => _FrontPageState();
+}
+
+class _FrontPageState extends State<FrontPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+                begin: Alignment.bottomLeft,
+                end: Alignment.topRight,
+                colors: [Colors.green, Colors.lightGreen])
+        ),
+        padding: EdgeInsets.all(10),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Text("Nutrient Manager Application", style: TextStyle(color:Colors.white,fontSize:36), textAlign: TextAlign.center),
+              Column(
+                children: [
+                  Text("Brought to you by:", style: TextStyle(color:Colors.white,fontSize:20), textAlign: TextAlign.center),
+                  SizedBox(height:20),
+                  Image.asset(
+                    'assets/dost-pcaarrd-uplb.png',
+                    //fit: BoxFit.,
+                    height: 50,
+                  ),
+                ],
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal:20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: RaisedButton(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                      //side: BorderSide(color: Colors.lightGreen[700])
+                    ),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => MyHomePage(title: 'Nutrient Manager App')),
+                      );
+                    },
+                    color: Colors.white,
+                    textColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical:15.0),
+                    child: Text('START CALCULATING',style:TextStyle(fontSize:15)),
+                  ),
+                ),
+              ),
+              //Text("Start Application"),
+            ],
+          ),
+        ),
+      ),
+    );
+//    return Container(
+//      child: Column(
+//        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//        children: [
+//          Text("Nutrient Manager Application"),
+//          Text("Brought to you by:"),
+//          Text("Start Application"),
+//        ],
+//      ),
+//    );
+  }
+}
+
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -274,7 +349,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // then parse the JSON.
       var gsheets = json.decode(response.body);
       ySupply = double.parse(gsheets['feed']['entry'][place_index[ch.split('-')[0]] + growingSeasonIndex]['content']['\$t']);
-      print(ySupply);
+      //print(ySupply);
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
@@ -299,9 +374,9 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }
     else if (caseCH[1] == "ammophosphate"){
-      AMF2 = ((frrP-frrK) / fType[caseCH[1]][1]) * fType[caseCH[1]][0];
+      AMF2 = ((frrP-frrK) / fType[caseCH[1]][1]); // * fType[caseCH[1]][0]
 
-      AMF3 = (frrN-frrK-AMF2) / fType[caseCH[2]][0];
+      AMF3 = (frrN-frrK-(AMF2 * fType[caseCH[1]][0])) / fType[caseCH[2]][0];
     }
 
     List<String> forN=[],forP=[],forK=[];
@@ -767,9 +842,9 @@ class _SecondPageState extends State<SecondPage> {
       }
     }
     else if (widget.caseCH[1] == "ammophosphate"){
-      AMF2_econ = ((frrP-frrK) / fType[widget.caseCH[1]][1]) * fType[widget.caseCH[1]][0];
+      AMF2_econ = ((frrP-frrK) / fType[widget.caseCH[1]][1]);
 
-      AMF3_econ = (frrN-frrK-AMF2_econ) / fType[widget.caseCH[2]][0];
+      AMF3_econ = (frrN-frrK-(AMF2_econ * fType[widget.caseCH[1]][0])) / fType[widget.caseCH[2]][0];
     }
 
     return([AMF1_econ,AMF2_econ,AMF3_econ]);
@@ -1214,6 +1289,19 @@ class _resultsPageState extends State<resultsPage> {
       appBar: AppBar(
         title: Text("SSNM Rates"),
         centerTitle: true,
+        actions: <Widget>[
+          Padding(
+              padding: EdgeInsets.only(right: 20.0),
+              child: GestureDetector(
+                onTap: () {
+                  print("View summary");
+                },
+                child: Icon(
+                    Icons.read_more
+                ),
+              )
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
           child: TabbarHeader(
